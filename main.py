@@ -98,6 +98,10 @@ def move_player(
                 player.top = wall.bottom
 
 
+def keep_player_inside_map(player: pygame.Rect, map_rect: pygame.Rect) -> None:
+    player.clamp_ip(map_rect)
+
+
 def main() -> None:
     pygame.init()
     screen = pygame.display.set_mode(SCREEN_SIZE)
@@ -133,6 +137,7 @@ def main() -> None:
         if movement.length_squared():
             movement = movement.normalize() * PLAYER_SPEED * delta_time
         move_player(player, movement, collision_rects)
+        keep_player_inside_map(player, map_rect)
 
         screen.fill(BACKGROUND_COLOR)
         draw_map(map_surface, logical_map_rect, wall_assets)
