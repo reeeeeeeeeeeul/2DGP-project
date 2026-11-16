@@ -1,28 +1,28 @@
 """Minimal square workshop map for the first playable prototype."""
 
 import sys
+from pathlib import Path
 
 import pygame
 
 
 SCREEN_SIZE = (800, 800)
-MAP_SIZE = pygame.Vector2(640, 640)
+MAP_SIZE = pygame.Vector2(320, 320)
 MAP_ORIGIN = pygame.Vector2(
     (SCREEN_SIZE[0] - MAP_SIZE.x) / 2,
     (SCREEN_SIZE[1] - MAP_SIZE.y) / 2,
 )
-WALL_THICKNESS = 48
-PLAYER_SIZE = 24
+TILE_SCALE = 2
+WALL_THICKNESS = 64
+PLAYER_SIZE = 32
 PLAYER_SPEED = 240
-ENTRANCE_WIDTH = 96
+ASSET_ROOT = Path(__file__).parent
+WALL_ASSET_ROOT = ASSET_ROOT / "CozyInteriors_v1.0" / "CozyInteriors" / "02_Walls_Doors" / "village_wood"
+CHARACTER_SHEET_PATH = ASSET_ROOT / "16x16-character-8D-template.png"
 
 BACKGROUND_COLOR = (35, 28, 43)
 FLOOR_COLOR = (186, 151, 110)
 FLOOR_ALT_COLOR = (180, 143, 102)
-WALL_COLOR = (76, 52, 69)
-WALL_EDGE_COLOR = (111, 77, 84)
-ENTRANCE_COLOR = (219, 183, 120)
-PLAYER_COLOR = (104, 170, 214)
 TEXT_COLOR = (246, 232, 198)
 
 
@@ -36,40 +36,43 @@ def get_map_rect() -> pygame.Rect:
 
 
 def get_collision_rects(map_rect: pygame.Rect) -> list[pygame.Rect]:
-    entrance_left = map_rect.centerx - ENTRANCE_WIDTH // 2
-    entrance_right = map_rect.centerx + ENTRANCE_WIDTH // 2
     return [
         pygame.Rect(map_rect.left, map_rect.top, map_rect.width, WALL_THICKNESS),
-        pygame.Rect(map_rect.left, map_rect.bottom - WALL_THICKNESS, entrance_left - map_rect.left, WALL_THICKNESS),
-        pygame.Rect(entrance_right, map_rect.bottom - WALL_THICKNESS, map_rect.right - entrance_right, WALL_THICKNESS),
-        pygame.Rect(map_rect.left, map_rect.top, WALL_THICKNESS, map_rect.height),
-        pygame.Rect(map_rect.right - WALL_THICKNESS, map_rect.top, WALL_THICKNESS, map_rect.height),
     ]
 
 
-def draw_map(screen: pygame.Surface, map_rect: pygame.Rect) -> None:
+def load_asset(path: Path, size: tuple[int, int]) -> pygame.Surface:
+    image = pygame.image.load(path).convert_alpha()
+    return pygame.transform.scale(image, size)
+
+
+def load_wall_assets() -> dict[str, pygame.Surface]:
+    return {
+        "face": load_asset(WALL_ASSET_ROOT / "village_wood_wall_face_mid.png", (32, 64)),
+    }
+
+
+def load_character() -> pygame.Surface:
+    sheet = pygame.image.load(CHARACTER_SHEET_PATH).convert_alpha()
+    frame = sheet.subsurface(pygame.Rect(0, 0, 16, 16))
+    return pygame.transform.scale(frame, (PLAYER_SIZE, PLAYER_SIZE))
+
+
+def draw_map(
+    screen: pygame.Surface,
+    map_rect: pygame.Rect,
+    wall_assets: dict[str, pygame.Surface],
+) -> None:
     pygame.draw.rect(screen, FLOOR_COLOR, map_rect)
 
     tile_size = 32
-    for row, y in enumerate(range(map_rect.top + WALL_THICKNESS, map_rect.bottom - WALL_THICKNESS, tile_size)):
-        for column, x in enumerate(
-            range(map_rect.left + WALL_THICKNESS, map_rect.right - WALL_THICKNESS, tile_size)
-        ):
+    for row, y in enumerate(range(map_rect.top, map_rect.bottom, tile_size)):
+        for column, x in enumerate(range(map_rect.left, map_rect.right, tile_size)):
             color = FLOOR_ALT_COLOR if (row + column) % 2 else FLOOR_COLOR
             pygame.draw.rect(screen, color, (x, y, tile_size, tile_size))
 
-    for wall in get_collision_rects(map_rect):
-        pygame.draw.rect(screen, WALL_COLOR, wall)
-        pygame.draw.rect(screen, WALL_EDGE_COLOR, wall, 3)
-
-    entrance = pygame.Rect(
-        map_rect.centerx - ENTRANCE_WIDTH // 2,
-        map_rect.bottom - WALL_THICKNESS,
-        ENTRANCE_WIDTH,
-        WALL_THICKNESS,
-    )
-    pygame.draw.rect(screen, ENTRANCE_COLOR, entrance)
-    pygame.draw.rect(screen, WALL_EDGE_COLOR, entrance, 3)
+    for x in range(map_rect.left, map_rect.right, 32):
+        screen.blit(wall_assets["face"], (x, map_rect.top))
 
 
 def move_player(
@@ -103,6 +106,8 @@ def main() -> None:
 
     map_rect = get_map_rect()
     collision_rects = get_collision_rects(map_rect)
+    wall_assets = load_wall_assets()
+    character = load_character()
     player = pygame.Rect(
         map_rect.centerx - PLAYER_SIZE // 2,
         map_rect.bottom - WALL_THICKNESS - PLAYER_SIZE - 12,
@@ -127,9 +132,8 @@ def main() -> None:
         move_player(player, movement, collision_rects)
 
         screen.fill(BACKGROUND_COLOR)
-        draw_map(screen, map_rect)
-        pygame.draw.rect(screen, PLAYER_COLOR, player)
-        pygame.draw.rect(screen, TEXT_COLOR, player, 2)
+        draw_map(screen, map_rect, wall_assets)
+        screen.blit(character, player)
 
         label = font.render("WASD  Move", True, TEXT_COLOR)
         screen.blit(label, (24, 24))
