@@ -25,6 +25,12 @@ BACKGROUND_COLOR = (35, 28, 43)
 FLOOR_COLOR = (186, 151, 110)
 FLOOR_ALT_COLOR = (180, 143, 102)
 TEXT_COLOR = (246, 232, 198)
+MOVEMENT_KEYS = {
+    pygame.K_w: pygame.Vector2(0, -1),
+    pygame.K_a: pygame.Vector2(-1, 0),
+    pygame.K_s: pygame.Vector2(0, 1),
+    pygame.K_d: pygame.Vector2(1, 0),
+}
 
 
 def get_map_rect() -> pygame.Rect:
@@ -102,6 +108,12 @@ def keep_player_inside_map(player: pygame.Rect, map_rect: pygame.Rect) -> None:
     player.clamp_ip(map_rect)
 
 
+def get_movement(pressed_keys: list[int]) -> pygame.Vector2:
+    if not pressed_keys:
+        return pygame.Vector2()
+    return MOVEMENT_KEYS[pressed_keys[-1]]
+
+
 def main() -> None:
     pygame.init()
     screen = pygame.display.set_mode(SCREEN_SIZE)
@@ -121,6 +133,7 @@ def main() -> None:
         PLAYER_SIZE,
         PLAYER_SIZE,
     )
+    pressed_keys: list[int] = []
     running = True
 
     while running:
@@ -128,12 +141,15 @@ def main() -> None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.KEYDOWN and event.key in MOVEMENT_KEYS:
+                if event.key in pressed_keys:
+                    pressed_keys.remove(event.key)
+                pressed_keys.append(event.key)
+            elif event.type == pygame.KEYUP and event.key in MOVEMENT_KEYS:
+                if event.key in pressed_keys:
+                    pressed_keys.remove(event.key)
 
-        keys = pygame.key.get_pressed()
-        movement = pygame.Vector2(
-            keys[pygame.K_d] - keys[pygame.K_a],
-            keys[pygame.K_s] - keys[pygame.K_w],
-        )
+        movement = get_movement(pressed_keys)
         if movement.length_squared():
             movement = movement.normalize() * PLAYER_SPEED * delta_time
         move_player(player, movement, collision_rects)
