@@ -8,14 +8,15 @@ import pygame
 
 SCREEN_SIZE = (800, 800)
 MAP_SIZE = pygame.Vector2(320, 320)
+DISPLAY_SCALE = 2
+DISPLAY_MAP_SIZE = MAP_SIZE * DISPLAY_SCALE
 MAP_ORIGIN = pygame.Vector2(
-    (SCREEN_SIZE[0] - MAP_SIZE.x) / 2,
-    (SCREEN_SIZE[1] - MAP_SIZE.y) / 2,
+    (SCREEN_SIZE[0] - DISPLAY_MAP_SIZE.x) / 2,
+    (SCREEN_SIZE[1] - DISPLAY_MAP_SIZE.y) / 2,
 )
-TILE_SCALE = 2
-WALL_THICKNESS = 64
+WALL_THICKNESS = 32
 PLAYER_SIZE = 32
-PLAYER_SPEED = 240
+PLAYER_SPEED = 120
 ASSET_ROOT = Path(__file__).parent
 WALL_ASSET_ROOT = ASSET_ROOT / "CozyInteriors_v1.0" / "CozyInteriors" / "02_Walls_Doors" / "village_wood"
 CHARACTER_SHEET_PATH = ASSET_ROOT / "16x16-character-8D-template.png"
@@ -28,8 +29,8 @@ TEXT_COLOR = (246, 232, 198)
 
 def get_map_rect() -> pygame.Rect:
     return pygame.Rect(
-        round(MAP_ORIGIN.x),
-        round(MAP_ORIGIN.y),
+        0,
+        0,
         round(MAP_SIZE.x),
         round(MAP_SIZE.y),
     )
@@ -65,7 +66,7 @@ def draw_map(
 ) -> None:
     pygame.draw.rect(screen, FLOOR_COLOR, map_rect)
 
-    tile_size = 32
+    tile_size = 16
     for row, y in enumerate(range(map_rect.top, map_rect.bottom, tile_size)):
         for column, x in enumerate(range(map_rect.left, map_rect.right, tile_size)):
             color = FLOOR_ALT_COLOR if (row + column) % 2 else FLOOR_COLOR
@@ -108,6 +109,8 @@ def main() -> None:
     collision_rects = get_collision_rects(map_rect)
     wall_assets = load_wall_assets()
     character = load_character()
+    map_surface = pygame.Surface((round(MAP_SIZE.x), round(MAP_SIZE.y)))
+    logical_map_rect = pygame.Rect(0, 0, round(MAP_SIZE.x), round(MAP_SIZE.y))
     player = pygame.Rect(
         map_rect.centerx - PLAYER_SIZE // 2,
         map_rect.bottom - WALL_THICKNESS - PLAYER_SIZE - 12,
@@ -132,8 +135,12 @@ def main() -> None:
         move_player(player, movement, collision_rects)
 
         screen.fill(BACKGROUND_COLOR)
-        draw_map(screen, map_rect, wall_assets)
-        screen.blit(character, player)
+        draw_map(map_surface, logical_map_rect, wall_assets)
+        map_surface.blit(character, player)
+        scaled_map = pygame.transform.scale(
+            map_surface, (round(DISPLAY_MAP_SIZE.x), round(DISPLAY_MAP_SIZE.y))
+        )
+        screen.blit(scaled_map, MAP_ORIGIN)
 
         label = font.render("WASD  Move", True, TEXT_COLOR)
         screen.blit(label, (24, 24))
