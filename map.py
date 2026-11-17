@@ -6,8 +6,6 @@ import pygame
 
 
 MAP_SIZE = pygame.Vector2(320, 320)
-DISPLAY_SCALE = 2
-DISPLAY_MAP_SIZE = MAP_SIZE * DISPLAY_SCALE
 WALL_THICKNESS = 32
 FLOOR_COLOR = (186, 151, 110)
 FLOOR_ALT_COLOR = (180, 143, 102)
@@ -61,15 +59,29 @@ class WorkshopMap:
         for x in range(self.rect.left, self.rect.right, 32):
             self.surface.blit(self.wall_assets["face"], (x, self.rect.top))
 
-        scaled_map = pygame.transform.scale(
-            self.surface,
-            (round(DISPLAY_MAP_SIZE.x), round(DISPLAY_MAP_SIZE.y)),
-        )
+        display_size = self.get_display_size(screen.get_size())
+        scaled_map = pygame.transform.scale(self.surface, display_size)
         screen.blit(scaled_map, self.get_display_origin(screen.get_size()))
 
     @staticmethod
     def get_display_origin(screen_size: tuple[int, int]) -> tuple[int, int]:
+        display_size = WorkshopMap.get_display_size(screen_size)
         return (
-            round((screen_size[0] - DISPLAY_MAP_SIZE.x) / 2),
-            round((screen_size[1] - DISPLAY_MAP_SIZE.y) / 2),
+            round((screen_size[0] - display_size[0]) / 2),
+            round((screen_size[1] - display_size[1]) / 2),
+        )
+
+    @staticmethod
+    def get_display_scale(screen_size: tuple[int, int]) -> float:
+        return min(
+            screen_size[0] / MAP_SIZE.x,
+            screen_size[1] / MAP_SIZE.y,
+        )
+
+    @staticmethod
+    def get_display_size(screen_size: tuple[int, int]) -> tuple[int, int]:
+        display_scale = WorkshopMap.get_display_scale(screen_size)
+        return (
+            round(MAP_SIZE.x * display_scale),
+            round(MAP_SIZE.y * display_scale),
         )

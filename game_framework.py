@@ -4,7 +4,7 @@ import sys
 
 import pygame
 
-from game_world import GameWorld, SCREEN_SIZE
+from game_world import GameWorld
 
 
 class GameFramework:
@@ -12,7 +12,7 @@ class GameFramework:
 
     def run(self) -> None:
         pygame.init()
-        screen = pygame.display.set_mode(SCREEN_SIZE)
+        screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         pygame.display.set_caption("Witch's Little Workshop - Map Prototype")
         clock = pygame.time.Clock()
         world = GameWorld()

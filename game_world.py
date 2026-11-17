@@ -3,19 +3,16 @@
 import pygame
 
 from character import Character
-from map import DISPLAY_SCALE, WorkshopMap
+from map import WorkshopMap
 
 
-SCREEN_SIZE = (800, 800)
 BACKGROUND_COLOR = (35, 28, 43)
-TEXT_COLOR = (246, 232, 198)
 
 
 class GameWorld:
     """Owns the map and player and coordinates their updates."""
 
     def __init__(self) -> None:
-        self.font = pygame.font.Font(None, 28)
         self.workshop_map = WorkshopMap()
         self.character = Character(
             self.workshop_map.rect,
@@ -36,19 +33,18 @@ class GameWorld:
         screen.fill(BACKGROUND_COLOR)
         self.workshop_map.draw(screen)
         display_origin = self.workshop_map.get_display_origin(screen.get_size())
+        display_scale = self.workshop_map.get_display_scale(screen.get_size())
         display_character = pygame.transform.scale(
             self.character.sprite,
             (
-                self.character.rect.width * DISPLAY_SCALE,
-                self.character.rect.height * DISPLAY_SCALE,
+                round(self.character.rect.width * display_scale),
+                round(self.character.rect.height * display_scale),
             ),
         )
         screen.blit(
             display_character,
             (
-                display_origin[0] + self.character.rect.x * DISPLAY_SCALE,
-                display_origin[1] + self.character.rect.y * DISPLAY_SCALE,
+                display_origin[0] + round(self.character.rect.x * display_scale),
+                display_origin[1] + round(self.character.rect.y * display_scale),
             ),
         )
-        label = self.font.render("WASD  Move", True, TEXT_COLOR)
-        screen.blit(label, (24, 24))
