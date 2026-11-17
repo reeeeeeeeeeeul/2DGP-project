@@ -3,7 +3,7 @@
 import pygame
 
 from character import Character
-from customer import Customer, SPEECH_FRAME_SIZE
+from customer import Customer, SPEECH_FRAME_SIZE, SPEECH_SCALE
 from map import WorkshopMap
 
 
@@ -75,7 +75,8 @@ class GameWorld:
             ),
         )
         if self.customer.is_arrived:
-            speech_size = round(SPEECH_FRAME_SIZE * display_scale)
+            speech_source_size = SPEECH_FRAME_SIZE * SPEECH_SCALE
+            speech_size = round(speech_source_size * display_scale)
             display_speech_indicator = pygame.transform.scale(
                 self.customer.speech_indicator,
                 (speech_size, speech_size),
@@ -85,12 +86,19 @@ class GameWorld:
                 (
                     display_origin[0]
                     + round(
-                        (self.customer.rect.centerx - SPEECH_FRAME_SIZE / 2)
+                        (
+                            self.customer.rect.centerx
+                            - speech_source_size / 2
+                        )
                         * display_scale
                     ),
                     display_origin[1]
                     + round(
-                        (self.customer.rect.top - SPEECH_FRAME_SIZE - 2)
+                        (
+                            self.customer.rect.top
+                            - speech_source_size
+                            - 2
+                        )
                         * display_scale
                     ),
                 ),

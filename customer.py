@@ -11,11 +11,12 @@ CUSTOMER_SPEED = 80
 SPEECH_FRAME_SIZE = 11
 SPEECH_FRAME_COUNT = 8
 SPEECH_FRAME_DURATION = 0.15
+SPEECH_SCALE = 2
 SPEECH_INDICATORS_PATH = (
     Path(__file__).parent
     / "tiny-speech-indicators"
     / "tiny-speech-indicators"
-    / "tiny_speech_indicators-11x11.png"
+    / "speech_bubble_animation-11x11.png"
 )
 
 
