@@ -3,6 +3,7 @@
 import pygame
 
 from character import Character
+from customer import Customer, SPEECH_FRAME_SIZE
 from map import WorkshopMap
 
 
@@ -18,6 +19,10 @@ class GameWorld:
             self.workshop_map.rect,
             self.workshop_map.collision_rects[0].height,
         )
+        self.customer = Customer(
+            self.workshop_map.rect,
+            self.workshop_map.collision_rects[0].height,
+        )
 
     def handle_event(self, event: pygame.event.Event) -> None:
         self.character.handle_event(event)
@@ -25,6 +30,11 @@ class GameWorld:
     def update(self, delta_time: float) -> None:
         self.workshop_map.update(delta_time)
         self.character.update(
+            delta_time,
+            self.workshop_map.rect,
+            self.workshop_map.collision_rects,
+        )
+        self.customer.update(
             delta_time,
             self.workshop_map.rect,
             self.workshop_map.collision_rects,
@@ -50,3 +60,38 @@ class GameWorld:
             ),
         )
         self.workshop_map.draw_foreground(screen)
+        display_customer = pygame.transform.scale(
+            self.customer.sprite,
+            (
+                round(self.customer.rect.width * display_scale),
+                round(self.customer.rect.height * display_scale),
+            ),
+        )
+        screen.blit(
+            display_customer,
+            (
+                display_origin[0] + round(self.customer.rect.x * display_scale),
+                display_origin[1] + round(self.customer.rect.y * display_scale),
+            ),
+        )
+        if self.customer.is_arrived:
+            speech_size = round(SPEECH_FRAME_SIZE * display_scale)
+            display_speech_indicator = pygame.transform.scale(
+                self.customer.speech_indicator,
+                (speech_size, speech_size),
+            )
+            screen.blit(
+                display_speech_indicator,
+                (
+                    display_origin[0]
+                    + round(
+                        (self.customer.rect.centerx - SPEECH_FRAME_SIZE / 2)
+                        * display_scale
+                    ),
+                    display_origin[1]
+                    + round(
+                        (self.customer.rect.top - SPEECH_FRAME_SIZE - 2)
+                        * display_scale
+                    ),
+                ),
+            )
