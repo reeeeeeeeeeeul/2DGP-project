@@ -4,6 +4,8 @@ from pathlib import Path
 
 import pygame
 
+from cauldron import Cauldron
+
 
 MAP_SIZE = pygame.Vector2(320, 320)
 WALL_THICKNESS = 32
@@ -27,13 +29,6 @@ KITCHEN_ASSET_ROOT = (
     / "03_Furniture"
     / "Kitchen"
 )
-WORKSHOP_ASSET_ROOT = (
-    ASSET_ROOT
-    / "CozyInteriors_v1.0"
-    / "CozyInteriors"
-    / "03_Furniture"
-    / "Workshops"
-)
 COUNTER_SOURCE_SIZE = (16, 32)
 COUNTER_SIZE = tuple(size * ASSET_SCALE for size in COUNTER_SOURCE_SIZE)
 COUNTER_TOP_CROP = MAP_TILE_SIZE * 2
@@ -44,11 +39,7 @@ COUNTER_COLLISION_SIZE = (
     COUNTER_SIZE[0],
     COUNTER_SIZE[1] - COUNTER_TOP_CROP,
 )
-CAULDRON_SOURCE_SIZE = 32
-CAULDRON_SIZE = CAULDRON_SOURCE_SIZE * ASSET_SCALE
 CAULDRON_Y = WALL_THICKNESS - MAP_TILE_SIZE
-CAULDRON_COLLISION_SIZE = CAULDRON_SIZE - MAP_TILE_SIZE
-CAULDRON_COLLISION_HEIGHT = CAULDRON_COLLISION_SIZE - MAP_TILE_SIZE
 
 
 class WorkshopMap:
@@ -58,6 +49,7 @@ class WorkshopMap:
         self.rect = pygame.Rect(0, 0, round(MAP_SIZE.x), round(MAP_SIZE.y))
         self.surface = pygame.Surface(self.rect.size)
         self.foreground_surface = pygame.Surface(self.rect.size, pygame.SRCALPHA)
+        self.cauldron = Cauldron(self.rect, CAULDRON_Y)
         self.wall_assets = {
             "face": self._load_asset(
                 WALL_ASSET_ROOT / "village_wood_wall_face_mid.png", (16, 32)
@@ -66,10 +58,6 @@ class WorkshopMap:
                 KITCHEN_ASSET_ROOT / "counter_plain_mid.png",
                 COUNTER_SOURCE_SIZE,
             ),
-            "cauldron": self._load_asset(
-                WORKSHOP_ASSET_ROOT / "cauldron_purple_anim_6f.png",
-                (CAULDRON_SOURCE_SIZE * 6, CAULDRON_SOURCE_SIZE),
-            ).subsurface(pygame.Rect(0, 0, CAULDRON_SIZE, CAULDRON_SIZE)),
         }
         self.collision_rects = [
             pygame.Rect(
@@ -88,14 +76,10 @@ class WorkshopMap:
             )
             for x in range(0, self.rect.width, COUNTER_DISPLAY_SIZE[0])
         )
-        self.collision_rects.append(
-            pygame.Rect(
-                self.rect.centerx - CAULDRON_COLLISION_SIZE // 2,
-                CAULDRON_Y + (CAULDRON_SIZE - CAULDRON_COLLISION_SIZE) // 2,
-                CAULDRON_COLLISION_SIZE,
-                CAULDRON_COLLISION_HEIGHT,
-            )
-        )
+        self.collision_rects.append(self.cauldron.collision_rect)
+
+    def update(self, delta_time: float) -> None:
+        self.cauldron.update(delta_time)
 
     @staticmethod
     def _load_asset(path: Path, size: tuple[int, int]) -> pygame.Surface:
@@ -117,13 +101,7 @@ class WorkshopMap:
         for x in range(self.rect.left, self.rect.right, 32):
             self.surface.blit(self.wall_assets["face"], (x, self.rect.top))
 
-        self.surface.blit(
-            self.wall_assets["cauldron"],
-            (
-                self.rect.centerx - CAULDRON_SIZE // 2,
-                CAULDRON_Y,
-            ),
-        )
+        self.cauldron.draw(self.surface)
 
         display_size = self.get_display_size(screen.get_size())
         scaled_map = pygame.transform.scale(self.surface, display_size)

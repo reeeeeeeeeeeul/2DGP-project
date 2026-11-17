@@ -23,6 +23,7 @@ class GameWorld:
         self.character.handle_event(event)
 
     def update(self, delta_time: float) -> None:
+        self.workshop_map.update(delta_time)
         self.character.update(
             delta_time,
             self.workshop_map.rect,
