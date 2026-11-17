@@ -9,7 +9,8 @@ PLAYER_SIZE = 32
 PLAYER_SPEED = 120
 FRAME_SIZE = 16
 FRAME_COUNT = 8
-WALK_FRAME_DURATION = 0.1
+IDLE_FRAME_COUNT = 4
+ANIMATION_FRAME_DURATION = 0.1
 CHARACTER_SHEET_PATH = Path(__file__).parent / "16x16-character-8D-template.png"
 MOVEMENT_KEYS = {
     pygame.K_w: pygame.Vector2(0, -1),
@@ -37,6 +38,7 @@ class Character:
         self._facing = "down"
         self._animation_frame = 0
         self._animation_timer = 0.0
+        self._is_moving = False
         self.sprite = self._sprites[self._facing][self._animation_frame]
         self.rect = pygame.Rect(
             map_rect.centerx - PLAYER_SIZE // 2,
@@ -111,14 +113,21 @@ class Character:
             self._facing = "down"
 
     def _update_animation(self, delta_time: float, is_moving: bool) -> None:
-        if not is_moving:
-            self._animation_frame = 0
+        animation_start = IDLE_FRAME_COUNT if is_moving else 0
+        animation_count = FRAME_COUNT - IDLE_FRAME_COUNT if is_moving else IDLE_FRAME_COUNT
+        if is_moving != self._is_moving:
+            self._animation_frame = animation_start
             self._animation_timer = 0.0
+            self._is_moving = is_moving
         else:
             self._animation_timer += delta_time
-            while self._animation_timer >= WALK_FRAME_DURATION:
-                self._animation_timer -= WALK_FRAME_DURATION
-                self._animation_frame = (self._animation_frame + 1) % FRAME_COUNT
+
+        while self._animation_timer >= ANIMATION_FRAME_DURATION:
+            self._animation_timer -= ANIMATION_FRAME_DURATION
+            self._animation_frame = (
+                animation_start
+                + (self._animation_frame - animation_start + 1) % animation_count
+            )
         self.sprite = self._sprites[self._facing][self._animation_frame]
 
     def _move(
