@@ -48,3 +48,4 @@ class GameWorld:
                 display_origin[1] + round(self.character.rect.y * display_scale),
             ),
         )
+        self.workshop_map.draw_foreground(screen)

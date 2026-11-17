@@ -46,7 +46,7 @@ class Character:
         self.sprite = self._sprites[self._facing][self._animation_frame]
         self.rect = pygame.Rect(
             map_rect.centerx - PLAYER_SIZE // 2,
-            map_rect.bottom - wall_thickness - PLAYER_SIZE - 12,
+            map_rect.centery - PLAYER_SIZE // 2,
             PLAYER_SIZE,
             PLAYER_SIZE,
         )
