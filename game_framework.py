@@ -21,7 +21,9 @@ class GameFramework:
         while running:
             delta_time = clock.tick(60) / 1000
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+                if event.type == pygame.QUIT or (
+                    event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE
+                ):
                     running = False
                 world.handle_event(event)
 
