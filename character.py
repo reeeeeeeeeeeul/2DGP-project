@@ -9,7 +9,10 @@ PLAYER_SIZE = 32
 PLAYER_SPEED = 120
 FRAME_SIZE = 16
 FRAME_COUNT = 8
-IDLE_FRAME_COUNT = 4
+IDLE_FRAME_COUNT = 3
+SLEEP_FRAME = 3
+SLEEP_DELAY = 5.0
+WALK_FRAME_START = 4
 ANIMATION_FRAME_DURATION = 0.1
 CHARACTER_SHEET_PATH = Path(__file__).parent / "16x16-character-8D-template.png"
 MOVEMENT_KEYS = {
@@ -39,6 +42,7 @@ class Character:
         self._animation_frame = 0
         self._animation_timer = 0.0
         self._is_moving = False
+        self._inactive_time = 0.0
         self.sprite = self._sprites[self._facing][self._animation_frame]
         self.rect = pygame.Rect(
             map_rect.centerx - PLAYER_SIZE // 2,
@@ -87,12 +91,19 @@ class Character:
         movement = self._get_movement()
         is_moving = movement.length_squared() > 0
         if is_moving:
+            self._inactive_time = 0.0
             self._update_facing(movement)
             movement *= PLAYER_SPEED * delta_time
+        else:
+            self._inactive_time += delta_time
 
         self._move(movement, collision_rects)
         self.rect.clamp_ip(map_rect)
-        self._update_animation(delta_time, is_moving)
+        self._update_animation(
+            delta_time,
+            is_moving,
+            self._inactive_time >= SLEEP_DELAY,
+        )
 
     def draw(self, surface: pygame.Surface) -> None:
         surface.blit(self.sprite, self.rect)
@@ -112,9 +123,22 @@ class Character:
         else:
             self._facing = "down"
 
-    def _update_animation(self, delta_time: float, is_moving: bool) -> None:
-        animation_start = IDLE_FRAME_COUNT if is_moving else 0
-        animation_count = FRAME_COUNT - IDLE_FRAME_COUNT if is_moving else IDLE_FRAME_COUNT
+    def _update_animation(
+        self,
+        delta_time: float,
+        is_moving: bool,
+        is_sleeping: bool,
+    ) -> None:
+        if is_sleeping:
+            self._animation_frame = SLEEP_FRAME
+            self._animation_timer = 0.0
+            self.sprite = self._sprites[self._facing][self._animation_frame]
+            return
+
+        animation_start = WALK_FRAME_START if is_moving else 0
+        animation_count = (
+            FRAME_COUNT - WALK_FRAME_START if is_moving else IDLE_FRAME_COUNT
+        )
         if is_moving != self._is_moving:
             self._animation_frame = animation_start
             self._animation_timer = 0.0
